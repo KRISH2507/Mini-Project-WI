@@ -1,40 +1,38 @@
-version: "3.9"
-services:
-  db:
-    image: postgres:13
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: testdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
-    volumes:
-      - ./db-data:/var/lib/postgresql/data
+version: '3.8'
 
+services:
   backend:
     build: ./backend
     ports:
       - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - DB_HOST=db
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_PORT=5432
     depends_on:
       - db
-    environment:
-      DB_HOST: db
-      DB_USER: postgres
-      DB_PASSWORD: example
-      DB_NAME: testdb
-      DB_PORT: 5432
-    restart: unless-stopped
 
   frontend:
     build: ./frontend
     ports:
       - "3000:3000"
-    depends_on:
-      - backend
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
 
-volumes:
-  # If you want a named volume you could add one; currently we mount ./db-data
-  # db-data:
-  #   driver: local
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
